@@ -1,0 +1,25 @@
+body, html {
+  margin: 0;
+  height:100%;
+}
+body{
+  min-height: 75rem;
+  padding-top: 4.5rem;
+  overflow: hidden;
+}
+.container-fluid, .parent{
+  height: 100%;
+}
+.col-xs-4,.col-sm-4,.col-md-4,.col-lg-4 {
+  position: relative;
+  float: left;
+  height:55%;
+  overflow-y: auto; 
+}
+.btn{
+  margin-left:0px;
+}
+tbody tr:hover
+{
+  background-color: #b3b3b3;
+}
