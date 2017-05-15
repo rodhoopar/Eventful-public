@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Eventful</title>
+
+        <!-- Bootstrap core CSS -->
+        <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
+
+        <!-- Custom styles for this template -->
+        <link href="{% static 'style.css' %}" rel="stylesheet">
+
+        <link rel="shortcut icon" href="{% static 'eventful.ico' %}" type="image/x-icon">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <style>
+	      body {
+	        background-color:white;
+	        text-align:center;
+	        color: black;
+	      }
+        #first {
+          left: 0;
+          line-height: 200px;
+          margin: auto;
+          margin-top: -100px;
+          position: absolute;
+          top: 40%;
+          width: 100%;
+          color:black;
+        }
+        #second {
+          left: 0;
+          line-height: 200px;
+          margin: auto;
+          margin-top: -100px;
+          position: absolute;
+          top: 50%;
+          width: 100%;
+          color:black;
+        }
+	      select, option { width: 83.5%; }
+	    </style>
+
+    </head>
+
+    <body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand" href="{% url 'manage' %}">Eventful</a>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'manage' %}">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'add' %}">Volunteers</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'create' %}">Settings</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Display messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <p style="color:black; background-color: white"{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Main stuff -->
+    <h1 id="first">404 Error: Page Not Found</h1>
+    <h1 id="second">Use the navbar to return to Eventful!</h1>
+
+    <!-- Javascript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="jquery-slim.min.js"><\/script>')</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="{% static 'bootstrap.min.js' %}"></script>
+    <script src="http://code.jquery.com/jquery.js"></script>
+    
+    <!-- Disable button doubleclick -->
+    <script>
+      $("form").each(function() {
+        $(this).submit(function() {
+          $(this).submit(function() {
+            return false;
+          });
+        });
+      });
+    </script>
+    <!--[if lt IE 10]>
+        <script src="assets/js/placeholder.js"></script>
+    <![endif]-->
+
+    </body>
+
+</html>

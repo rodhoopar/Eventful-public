@@ -1,0 +1,27 @@
+body
+{
+	background-image: url(./back.jpg);
+	background-size: 100% 100%;
+}
+
+.center
+{
+ position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: grey;
+  -moz-border-radius: 4px 4px 4px 4px; -webkit-border-radius: 4px 4px 4px 4px; border-radius: 4px 4px 4px 4px;
+  /*background-color: #5cb85c;*/
+}
+
+h1
+{
+	font-size: 42pt;
+	margin: 20px;
+}
+
+form
+{
+margin: 20px;
+}

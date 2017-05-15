@@ -1,0 +1,119 @@
+<!-- User Registration Page -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Eventful</title>
+
+        <!-- CSS -->
+        <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
+        <link href="{% static 'form-elements.css' %}" rel="stylesheet">
+        <link href="{% static 'style.css' %}" rel="stylesheet">
+
+        <link rel="shortcut icon" href="{% static 'eventful.ico' %}" type="image/x-icon">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+    </head>
+
+    <body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand" href="{% url 'index' %}">Eventful</a>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <ul class="navbar-nav navbar-right">
+          <li class="nav-item active">
+            <a class="nav-link" href="https://rodhoopar.github.io/try-eventful/">About<span class="sr-only">(current)</span></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+        <!-- Top content -->
+        <div class="top-content">
+            
+            <div class="inner-bg">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm-6 col-sm-offset-3 form-box">
+                            <div class="form-top">
+                                <div class="form-top-left">
+                                    <h2>Register for Eventful</h2>
+                                </div>
+                            </div>
+                            <div class="form-bottom">
+                            
+                            <!-- Registration Form -->
+                            <form method="post">
+							{% csrf_token %}
+                            {% for field in form.visible_fields %}
+                            <table style="width:100%">
+                            <tr>
+                                <td><p><input id="id_{{field.name}}" style="width:100%" name="{{field.name}}" type = "{{field.field.widget.input_type}}" class="form-control" placeholder="{{field.label}}" {% if field.field.required %} required {% endif %}></p></td>
+                            </tr>
+                            </table>
+
+                            <table style="width:100%">
+                            <tr>
+                                <td><p>{{field.errors}}</p></td>
+                            </tr>
+                            </table>
+                            {% endfor %}
+    						<table style="width:100%">
+                                    <tr>
+                                    <td>
+                                    <a href = "{% url 'index' %}" > <button type = "button" class="btn" style = "margin-right: 5%">Sign In!</button> </a>
+                                    </td>
+                                    <td>
+									<button style = "margin-left: 1%" type="submit" class="btn">Register</button>
+                                    </td>
+                                    </tr>
+                                    </table>
+							</form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Javascript -->
+        <script src="{% static 'jquery-1.11.1.min.js' %}"></script>
+        <script src="{% static 'bootstrap.min.js' %}"></script>
+        <script src="{% static 'jquery.backstretch.min.js' %}"></script>
+        <script src="{% static 'scripts.js' %}"></script>
+        
+        <!-- Disable button doubleclick -->
+        <script>
+          $("form").each(function() {
+            $(this).submit(function() {
+              $(this).submit(function() {
+                return false;
+              });
+            });
+          });
+        </script>
+        <!--[if lt IE 10]>
+            <script src="assets/js/placeholder.js"></script>
+        <![endif]-->
+
+    </body>
+
+</html>

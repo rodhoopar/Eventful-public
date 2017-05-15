@@ -1,0 +1,755 @@
+{% load static %}
+<!DOCTYPE html>
+<html id = "html" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="height=device-height width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Eventful - {{event.name}}</title>
+
+  <!-- Bootstrap core CSS -->
+  <script src="http://code.jquery.com/jquery.js"></script>
+  <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="{% static 'navbar-top-fixed.css' %}" rel="stylesheet">
+  <link href="{% static 'style.css' %}" rel="stylesheet">
+
+  <link rel="shortcut icon" href="{% static 'eventful.ico' %}" type="image/x-icon">
+
+  <style>
+    body {
+      background-color:white;
+      text-align:left;
+      color: black;
+    }
+    select, option { width: 83.5%; }
+  </style>
+  <script src="https://js.pusher.com/4.0/pusher.min.js"></script>
+  <script src="{% static 'bootstrap.min.js' %}"></script>
+</head>
+
+<body>
+
+  <!-- Script to make Pusher changes -->
+  <script>
+    var pusher = new Pusher('acdc038504e0938fda16', {
+      encrypted: true
+    });
+
+    // Changes on 'yes'
+    var channel1 = pusher.subscribe('yes');
+    channel1.bind('my-event', function(data) {
+      if(data['event'] == document.getElementById('eventID').innerHTML)
+      {
+        document.getElementById(data['id'] + "vname").style.backgroundColor = "#efbab8"
+        document.getElementById(data['id'] + "vname").innerHTML = data['name'] + ' - ' + data['status']
+        document.getElementById(data['id']+'modal').innerHTML = 'Current Status: ' + data['status']
+        document.getElementById(data['task'] + "col").innerHTML = data['taskname'] + ' - ' + data['taskstat']
+        document.getElementById(data['task']+'modal').innerHTML = 'Task Status: ' + data['taskstat']
+        document.getElementById(data['id']+'tasks').innerHTML = "Tasks Accepted/Assigned: " + data['accept'] + "/" + data['assign']
+        document.getElementById(data['id'] + 'time').innerHTML = "Avg. Response Time: " + data['time'] + " seconds"
+      }
+    });
+
+    // Changes on 'done'
+    var channel2 = pusher.subscribe('done');
+    channel2.bind('my-event', function(data) {
+      if(data['event'] == document.getElementById('eventID').innerHTML)
+      {
+        document.getElementById(data['id'] + "vname").innerHTML = data['name'] + ' - ' + data['status']
+        document.getElementById(data['id'] + "vname").style.backgroundColor = "#bde2bd"
+      document.getElementById(data['id']+'modal').innerHTML = 'Current Status: ' + data['status']
+      document.getElementById(data['task'] + "col").remove();
+      document.getElementById('completeParent').innerHTML = document.getElementById('completeParent').innerHTML + "<tr><td data-toggle=\"modal\" data-target=\"#"+data['task']+"\"<td>"+data['taskname']+" - "+data['taskstat']+"</td></tr>"
+      document.getElementById(data['id'] + "volunModalDM").innerHTML = "<p><label for=\"id_description\">New Task Description:&nbsp;</label><textarea cols=\"40\" id=\"id_description\" name=\"description\" rows=\"3\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\" /></p><input hidden id=\"id_volunteer\" name=\"volunteer\" value=\""+data['id'] + "\"" + "/><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+      document.getElementById(data['task']+'modal').remove()
+
+      document.getElementById(data['id']+"delete").innerHTML = "<form method=\"post\" style=\"display:inline\">" + document.getElementById('csrf').innerHTML + "<input hidden type=\"text\" name=\"volunteer_id\" value=\"" + data['id']+ "\"" + "><button type=\"submit\" name=\"deletevolunteer\" class=\"btn btn-danger\" style=\"float:right\">Delete Volunteer</button></form>"
+
+      add = document.getElementById('csrf').innerHTML + "<p><label for=\"id_description\">Description:</label> <textarea name=\"description\" id=\"id_description\" rows=\"10\" cols=\"40\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+      if (parseInt(data['num_free']) != 0)
+      {
+       if(parseInt(data['num_free']) == 1)
+       {
+        document.getElementById("noneAvailable").innerHTML = ""
+       }
+        for(x = 1; x <= parseInt(data['num_free']); x++)
+        {
+          add += "<option value=\"" + data['volun' + x] + "\"" + ">" + data['volunname' + x] + "</option>"
+        }
+        add += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+        document.getElementById("exist").innerHTML = add
+      }
+      else
+      {
+        document.getElementById("noneAvailable").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+      }
+
+      for(x = 1; x<= parseInt(data['numtasks']); x++)
+      {
+        if (parseInt(data['num_free']) == 0)
+        {
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+        }
+        else
+        {
+          text = "<p><b>Reassign This Task</b></p><input hidden id=\"id_description\" name=\"description\" value=\""+data['taskname'+x]+ "\""+"/><input hidden name=\"previous_id\" value=\""+data['task'+x]+ "\""+"/><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+
+          for(y = 1; y <= parseInt(data['num_free']); y++)
+          {
+            text += "<option value=\"" + data['volun' + y] + "\"" + ">" + data['volunname' + y] + "</option>"
+          }
+
+          text += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Reassign</button>"
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = text
+
+        }
+      }
+      document.getElementById(data['id'] + "doing").innerHTML = ""
+      document.getElementById(data['task'] + "delbut").innerHTML = "<button type=\"submit\" name=\"deletetask_completed\" class=\"btn btn-danger\" style=\"float:right\">Delete Task</button>"
+      document.getElementById(data['task'] + "assign").innerHTML = "Completed By: " + data['name']
+    }});
+
+    // Changes on 'gone'
+    var channel3 = pusher.subscribe('gone');
+    channel3.bind('my-event', function(data) {
+      if(data['event'] == document.getElementById('eventID').innerHTML)
+      {
+        document.getElementById('messages').innerHTML = document.getElementById('messages').innerHTML + "<p style=\"text-align:center; color:white; background-color: #d9534f\"\">" + data['name'] + " has unsubscribed from Eventful. Please contact them directly to resolve the issue.</p>"
+    }});
+
+    // Changes on 'unavailable'
+    var channel4 = pusher.subscribe('unavailable');
+    channel4.bind('my-event', function(data) {
+    if(data['event'] == document.getElementById('eventID').innerHTML)
+    {
+      document.getElementById(data['id'] + "vname").innerHTML = data['name'] + ' - ' + data['status']
+      document.getElementById(data['id']+'modal').innerHTML = 'Current Status: ' + data['status']
+      document.getElementById(data['id'] + "doing").innerHTML = ""
+      document.getElementById(data['id'] + "vname").style.backgroundColor = "#efbab8"
+      document.getElementById(data['id']+'modal').innerHTML = 'Current Status: ' + data['status']
+      if (data['pend'] == "1")
+      {
+        document.getElementById(data['task'] + "assign").innerHTML = "Assigned To: (Waiting to Reassign)"; 
+      }
+      document.getElementById(data['id'] + "volunModalDM").innerHTML = "<input hidden type=\"text\" name=\"volunteer_phone\" value=\"" + data['nphone'] + "\"> <p><label>Send Direct Message:</label><textarea cols=\"40\" name=\"message\" rows=\"3\" required></textarea></p><button name=\"directmessage\" class=\"btn btn-success btn-block\" type=\"submit\">Message</button>"
+    add = document.getElementById('csrf').innerHTML + "<p><label for=\"id_description\">Description:</label> <textarea name=\"description\" id=\"id_description\" rows=\"10\" cols=\"40\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+      
+    if (parseInt(data['num_free']) != 0)
+      {
+       if(parseInt(data['num_free']) == 1)
+       {
+        document.getElementById("noneAvailable").innerHTML = ""
+       }
+        for(x = 1; x <= parseInt(data['num_free']); x++)
+        {
+          add += "<option value=\"" + data['volun' + x] + "\"" + ">" + data['volunname' + x] + "</option>"
+        }
+        add += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+        document.getElementById("exist").innerHTML = add
+      }
+      else
+      {
+        document.getElementById("noneAvailable").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+      }
+
+      for(x = 1; x<= parseInt(data['numtasks']); x++)
+      {
+        if (parseInt(data['num_free']) == 0)
+        {
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+        }
+        else
+        {
+          text = "<p><b>Reassign This Task</b></p><input hidden id=\"id_description\" name=\"description\" value=\""+data['taskname'+x]+ "\""+"/><input hidden name=\"previous_id\" value=\""+data['task'+x]+ "\""+"/><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+
+          for(y = 1; y <= parseInt(data['num_free']); y++)
+          {
+            text += "<option value=\"" + data['volun' + y] + "\"" + ">" + data['volunname' + y] + "</option>"
+          }
+
+          text += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Reassign</button>"
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = text
+
+        }
+      }
+    if(parseInt(data['num_free']) == 0 )
+    {document.getElementById('exist').innerHTML = ""}
+    }
+    });
+
+    // Changes on 'reassign'
+    var channel5 = pusher.subscribe('reassign');
+    channel5.bind('my-event', function(data) {
+    if(data['event'] == document.getElementById('eventID').innerHTML)
+    {
+      document.getElementById(data['new'] + "volunModalDM").innerHTML = "<input hidden type=\"text\" name=\"volunteer_phone\" value=\"" + data['nphone'] + "\"> <p><label>Send Direct Message:</label><textarea cols=\"40\" name=\"message\" rows=\"3\" required></textarea></p><button name=\"directmessage\" class=\"btn btn-success btn-block\" type=\"submit\">Message</button>"
+      document.getElementById(data['old']+"vname").innerHTML = data['oname'] + ' - ' + data['ostatus']
+      document.getElementById(data['new']+"vname").innerHTML = data['nname'] + ' - ' + data['nstatus']
+      if(data['ostatus'] != "Unavailable")
+      {
+        document.getElementById(data['old'] + "vname").style.backgroundColor = "#bde2bd"
+        document.getElementById(data['old'] + "volunModalDM").innerHTML = "<p><label for=\"id_description\">New Task Description:&nbsp;</label><textarea cols=\"40\" id=\"id_description\" name=\"description\" rows=\"3\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\" /></p><input hidden id=\"id_volunteer\" name=\"volunteer\" value=\""+data['old'] + "\"" + "/><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+      }
+      document.getElementById(data['old']+'modal').innerHTML = 'Current Status: ' + data['ostatus']
+      document.getElementById(data['new'] + "vname").style.backgroundColor = "#efbab8"
+      document.getElementById(data['new']+'modal').innerHTML = 'Current Status: ' + data['nstatus']
+      document.getElementById(data['old'] + "doing").innerHTML = null
+      document.getElementById(data['new'] + "doing").innerHTML = "Currently Doing: " + data['otaskname']
+      document.getElementById(data['new']+"delete").innerHTML = null
+      document.getElementById(data['old']+"delete").innerHTML = "<form method=\"post\" style=\"display:inline\">" + document.getElementById(data['old']+'delete').innerHTML + "<input hidden type=\"text\" name=\"volunteer_id\" value=\"" + data['old']+ "\"" + "><button type=\"submit\" name=\"deletevolunteer\" class=\"btn btn-danger\" style=\"float:right\">Delete Volunteer</button></form>"
+
+      document.getElementById(data['ntask'] + "col").remove()
+      document.getElementById('incompleteParent').innerHTML = document.getElementById('incompleteParent').innerHTML + "<tr><td id = \"" + data['otask'] +  "col\" data-toggle=\"modal\" data-target=\"#"+data['otask']+"\"<td>"+data['otaskname']+" - Pending</td></tr>"
+
+      if (data['hp'] == 'true')
+        data['hp'] = "Yes"
+      else
+        data['hp'] = "No"
+
+      document.getElementById("wrapper").innerHTML =  document.getElementById("wrapper").innerHTML + "<div id = \"" + data['otask'] + "incomp\"><div id=\"" + data['otask'] + "\"" +  "class=\"modal fade\" role=\"dialog\" data-backdrop=\"true\"><div class=\"modal-dialog\"><div class=\"modal-content\"><div class=\"modal-header\"><b>" + data['otaskname'] + "</b><button type=\"button\" class=\"close\" data-dismiss=\"modal\">&times;</button>    </div><div id=\"" + data['otask'] + "taskmodal\""+"><div class=\"modal-body\"><p id = \"" + data['otask'] + "assign\">Assigned To: " + data['nname'] + "<p id =\"" + data['otask']+ "modal\">Task Status: Pending</p>High Priority: " + data['hp'] + "<form method=\"post\" style=\"display:inline\">" + document.getElementById('csrf').innerHTML + "<input hidden type=\"text\" name=\"task_id\" value=\"" + data['otask'] + "\"/> <span id = \"" + data['otask'] + "delbut\"><button type=\"submit\" name=\"deletetask\" class=\"btn btn-danger\" style=\"float:right\">Delete Task</button></span></form></div><div class=\"modal-footer\"><fieldset class=\"w-100\"><form method=\"post\">" + document.getElementById('csrf').innerHTML + "<div id = \"" + data['otask'] + "taskModalForm\"><input hidden type=\"text\" name=\"task_id\" value=\"" + data['otask'] + "\"/> <p><label>New Description:&nbsp;</label><textarea cols=\"40\" name=\"new_description\" rows=\"3\" required></textarea></p><button name=\"updatedescription\" class=\"btn btn-success btn-block\" type=\"submit\">Update Task</button></div></form></fieldset></div></div></div></div></div></div>"
+
+      if (document.getElementById(data['ntask'] + 'incomp').innerHTML.indexOf('modal fade show') != -1)
+      {
+        $(data['ntask']).modal('hide');
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+        $("#"+data['otask']).modal('show'); 
+    }
+
+    document.getElementById(data['ntask'] + 'incomp').remove()
+    add = document.getElementById('csrf').innerHTML + "<p><label for=\"id_description\">Description:</label> <textarea name=\"description\" id=\"id_description\" rows=\"10\" cols=\"40\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+      
+    if (parseInt(data['num_free']) != 0)
+      {
+       if(parseInt(data['num_free']) == 1)
+       {
+        document.getElementById("noneAvailable").innerHTML = ""
+       }
+        for(x = 1; x <= parseInt(data['num_free']); x++)
+        {
+          add += "<option value=\"" + data['volun' + x] + "\"" + ">" + data['volunname' + x] + "</option>"
+        }
+        add += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+        document.getElementById("exist").innerHTML = add
+      }
+      else
+      {
+        document.getElementById("noneAvailable").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+      }
+
+      for(x = 1; x<= parseInt(data['numtasks']); x++)
+      {
+        if (parseInt(data['num_free']) == 0)
+        {
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+        }
+        else
+        {
+          text = "<p><b>Reassign This Task</b></p><input hidden id=\"id_description\" name=\"description\" value=\""+data['taskname'+x]+ "\""+"/><input hidden name=\"previous_id\" value=\""+data['task'+x]+ "\""+"/><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+
+          for(y = 1; y <= parseInt(data['num_free']); y++)
+          {
+            text += "<option value=\"" + data['volun' + y] + "\"" + ">" + data['volunname' + y] + "</option>"
+          }
+
+          text += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Reassign</button>"
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = text
+
+        }
+      }
+    }
+    });
+
+    // Changes on 'available'
+    var channel6 = pusher.subscribe('available');
+    channel6.bind('my-event', function(data) {
+    if(data['event'] == document.getElementById('eventID').innerHTML)
+    {
+      document.getElementById(data['id'] + "vname").innerHTML = data['name'] + ' - ' + data['status']
+      document.getElementById(data['id']+'modal').innerHTML = 'Current Status: ' + data['status']
+      document.getElementById(data['id']+'modal').innerHTML = 'Current Status: ' + data['status']
+
+      if (parseInt(data['task']) != -1)
+      {
+        document.getElementById(data['task'] + "assign").innerHTML = "Assigned To: " + data['name']
+      }
+
+      if (data['status'] != 'Pending')
+      {
+        document.getElementById(data['id'] + "vname").style.backgroundColor = "#bde2bd"
+        document.getElementById(data['id'] + "volunModalDM").innerHTML = "<p><label for=\"id_description\">New Task Description:&nbsp;</label><textarea cols=\"40\" id=\"id_description\" name=\"description\" rows=\"3\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\" /></p><input hidden id=\"id_volunteer\" name=\"volunteer\" value=\""+data['id'] + "\"" + "/><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+      }
+      add = document.getElementById('csrf').innerHTML + "<p><label for=\"id_description\">Description:</label> <textarea name=\"description\" id=\"id_description\" rows=\"10\" cols=\"40\" required></textarea></p><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+      
+    if (parseInt(data['num_free']) != 0)
+      {
+       if(parseInt(data['num_free']) == 1)
+       {
+        document.getElementById("noneAvailable").innerHTML = ""
+       }
+        for(x = 1; x <= parseInt(data['num_free']); x++)
+        {
+          add += "<option value=\"" + data['volun' + x] + "\"" + ">" + data['volunname' + x] + "</option>"
+        }
+        add += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Assign</button>"
+        document.getElementById("exist").innerHTML = add
+      }
+      else
+      {
+        document.getElementById("noneAvailable").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+      }
+
+      for(x = 1; x<= parseInt(data['numtasks']); x++)
+      {
+        if (parseInt(data['num_free']) == 0)
+        {
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = "No volunteers currently available to reassign to! Add more or try again later."
+        }
+        else
+        {
+          text = "<p><b>Reassign This Task</b></p><input hidden id=\"id_description\" name=\"description\" value=\""+data['taskname'+x]+ "\""+"/><input hidden name=\"previous_id\" value=\""+data['task'+x]+ "\""+"/><p><label for=\"id_priority\">High Priority:&nbsp;</label><input id=\"id_priority\" name=\"priority\" type=\"checkbox\"/><p>Volunteer: <select name=\"volunteer\" id=\"id_volunteer\"><option value=\"\">Random</option>"
+
+          for(y = 1; y <= parseInt(data['num_free']); y++)
+          {
+            text += "<option value=\"" + data['volun' + y] + "\"" + ">" + data['volunname' + y] + "</option>"
+          }
+
+          text += "</select></p><button name=\"assign\" class=\"btn btn-success btn-block\" type=\"submit\">Reassign</button>"
+          document.getElementById(data['task'+x] + "taskModalForm").innerHTML = text
+
+        }
+      }
+    }
+  });
+</script>
+
+<!-- Navbar -->
+<nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
+  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <a class="navbar-brand" href="{% url 'manage' %}">{{ event.name }}</a>
+  <div class="collapse navbar-collapse" id="navbarCollapse">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="{% url 'manage' %}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'add' %}">Volunteers</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'settings' %}">Settings</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+      </li>
+    </ul>
+    <ul class="navbar-nav navbar-right">
+      <li class="nav-item">
+        <button type="button" class="btn btn-outline-danger my-2 my-sm-0" data-toggle="modal" data-target="#endevent">End Event
+        </button>
+      </li>
+      <li class="nav-item active">&nbsp;</li>
+      <li class="nav-item">
+        <button class="btn btn-outline-success my-2 my-sm-0" data-toggle="modal" data-target="#texteveryone">Announce
+        </button>
+      </li>
+      <li class="nav-item active">&nbsp;</li>
+      <li class="nav-item active">
+        <button class="btn btn-outline-success my-2 my-sm-0" data-toggle="modal" data-target="#addform">Add Task
+        </button>
+      </li>
+      <li class="nav-item active">&nbsp;</li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Display color-coded messages -->
+<div id = 'messages'>
+  {% if messages %}
+  {% for message in messages %}
+  {% if message.tags == 'success' %}
+  <p style="text-align:center; color:white; background-color: #5cb85c"{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+  {% elif message.tags == 'warning' %}
+  <p style="text-align:center; color:white; background-color: #d9534f"{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+  {% elif message.tags == 'info' %}
+  <p style="text-align:center; color:white; background-color: black"{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+</div>
+<div id = "csrf">
+  {% csrf_token %}
+</div>
+<div hidden id = "eventID">
+  {{event.id}}
+</div>
+
+<!-- Add Task Modal -->
+<div id="addform" class="modal fade" role="dialog" data-backdrop="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <b>Add Task</b>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+          {% if free_volunteers %}
+          <div id = "noneAvailable"></div>
+          <div id = "exist">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button name="assign" class="btn btn-success btn-block" type="submit">Assign</button>
+          </div>
+          {% else %}
+          <span id = "exist"> </span>
+          <div id = "noneAvailable">
+            No volunteers currently available! Add more or try again later.
+          </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Announcement Modal -->
+<div id="texteveryone" class="modal fade" role="dialog" data-backdrop="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <b>Make Announcement</b>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+          {% csrf_token %}
+          <p><label>Message:&nbsp;</label><textarea cols="40" name="message" rows="10" required></textarea></p>
+          <p><label>To Category:</label>
+            <select name="category" style="width:79.5%">
+              <option style="width:79.5%" value="">All Volunteers</option>
+              {% for category in categories %}
+              {% if category %}
+              <option style="width:79.5%" value="{{category}}">{{category|capfirst}}</option>
+              {% endif %}
+              {% endfor %}
+            </select></p>
+            <button name="announce" class="btn btn-success btn-block" type="submit">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Event Modal -->
+  <div id="endevent" class="modal fade" role="dialog" data-backdrop="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><b>Ready to end your event?</b></h2>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <span style="display:inline;">
+            Before leaving, we recommend downloading your updated volunteer list as a .csv file for future use.
+            <a href="{% url 'volunteers' %}" style="float:right;"><button class="btn btn-primary">Download</button></a>
+          </span>
+          <p></p><br>
+          <p style="text-align:center;"><b><b>Once you end {{event.name}}, there's no going back.</b></b></p>
+          <form method="post">
+            {% csrf_token %}
+            <button name="end" class="btn btn-danger btn-block" type="submit">End {{event.name}}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for each volunteer -->
+  {% for volunteer in all_volunteers %} 
+  <div id="{{volunteer.phone}}" class="modal fade" role="dialog" data-backdrop="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <form method="post" class="form-inline"> 
+            {% csrf_token %}
+            <input hidden type="text" name="volunteer_id" value="{{volunteer.id}}">
+            <div class="form-group">
+              <label>Name:&nbsp;</label>
+              <input style="color:black" type="text" class="form-control" name="new_name" value="{{volunteer.name}}"> 
+              <label>&nbsp;</label>
+            </div>
+            <button type="submit" name="updatename" class="btn btn-default">Update</button>
+          </form>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form method="post" class="form-inline"> 
+            {% csrf_token %}
+            <input hidden type="text" name="volunteer_id" value="{{volunteer.id}}">
+            <div class="form-group">
+              <label>Phone Number:&nbsp;</label>
+              <input style="color:black" type="text" class="form-control" name="new_phone" value="{{volunteer.phone}}"> 
+              <label>&nbsp;</label>
+            </div>
+            <button type="submit" name="updatephone" class="btn btn-default">Update</button>
+          </form><p></p>
+          <form method="post" class="form-inline"> 
+            {% csrf_token %}
+            <input hidden type="text" name="volunteer_id" value="{{volunteer.id}}">
+            <div class="form-group">
+              <label>Category:&nbsp;</label>
+              <input style="color:black" type="text" class="form-control" name="new_category" value="{{volunteer.category}}"> 
+              <label>&nbsp;</label>
+            </div>
+            <button type="submit" name="updatecategory" class="btn btn-default">Update</button>
+          </form><p></p>
+          <p id = '{{volunteer.id}}modal'>Current Status: {{volunteer.status}}</p>
+          <p id = "{{volunteer.id}}time">Avg. Response Time: {% if volunteer.avg_responsetime %} {{volunteer.avg_responsetime}} seconds {% else %} N/A {% endif %}</p>
+          {% if volunteer.status == "Free" or volunteer.status == "Unavailable" %}
+          <p id = '{{volunteer.id}}tasks'> Tasks Accepted/Assigned: {{volunteer.num_accepted}}/{{volunteer.num_assigned}} </p>
+          <div id = "{{volunteer.id}}delete">
+            <form method="post">
+              {% csrf_token %}
+              <input hidden type="text" name="volunteer_id" value="{{volunteer.id}}">
+              <button type="submit" name="deletevolunteer" class="btn btn-danger" style="float:right">Delete Volunteer</button>
+            </form>
+          </div>
+          <p id = "{{volunteer.id}}doing"></p>
+          {% else %}
+          <p id = '{{volunteer.id}}tasks'>Tasks Accepted/Assigned: {{volunteer.num_accepted}}/{{volunteer.num_assigned}}</p>
+          {% for task in incomplete_tasks %}
+          {% if volunteer.id == task.volunteer.id %}
+          <p id = "{{volunteer.id}}doing">Currently Doing: {{task.description}}</p>
+          {% endif %}
+          {% endfor %}
+          <div id = "{{volunteer.id}}delete">
+            {% csrf_token %}
+          </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer form-horizonal">
+          {% if volunteer.status == "Free" %}
+          <form method="post"> 
+            {% csrf_token %}
+            <div id = "{{volunteer.id}}volunModalDM">
+              <p><label for="id_description">New Task Description:&nbsp;</label><textarea cols="40" id="id_description" name="description" rows="3" required></textarea></p>
+              <p><label for="id_priority">High Priority:&nbsp;</label><input id="id_priority" name="priority" type="checkbox" /></p>
+              <input hidden id="id_volunteer" name="volunteer" value="{{volunteer.id}}"/>
+              <button name="assign" class="btn btn-success btn-block" type="submit">Assign</button>
+            </div>
+          </form>
+          {% else %}
+          <form method="post">
+            {% csrf_token %}
+            <div id = "{{volunteer.id}}volunModalDM">
+              <input hidden type="text" name="volunteer_phone" value="{{volunteer.phone}}"> 
+              <p><label>Send Direct Message:</label><textarea cols="40" name="message" rows="3" required></textarea></p>
+              <button name="directmessage" class="btn btn-success btn-block" type="submit">Message</button>
+            </div>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Modal for each incomplete task -->
+  {% for task in incomplete_tasks %}
+  <div id = "wrapper">
+    <div id = "{{task.id}}incomp">
+      <div id="{{task.id}}" class="modal fade" role="dialog" data-backdrop="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <b>{{task.description}}</b>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>    
+            </div>
+            <div id="{{task.id}}taskmodal">
+              <div class="modal-body">
+                {% for volunteer in all_volunteers %}
+                {% if volunteer.id == task.volunteer.id %}
+                {% if volunteer.status == "Unavailable" %}
+                <p id = "{{task.id}}assign">Assigned To: (Waiting to Reassign)
+                  {% else %}
+                  <p id = "{{task.id}}assign">Assigned To: {{volunteer.name}}
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    <p id = "{{task.id}}modal">Task Status: {{task.status}}</p>
+                    High Priority:{% if task.priority %} Yes {% else %} No {% endif %}
+                    <form method="post" style="display:inline">
+                      {% csrf_token %}
+                      <input hidden type="text" name="task_id" value="{{task.id}}" /> 
+                      <span id = "{{task.id}}delbut">
+                        <button type="submit" name="deletetask" class="btn btn-danger" style="float:right">Delete Task</button>
+                      </span>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <fieldset class="w-100">
+                      <form method="post">
+                        {% csrf_token %}
+                        <div id = "{{task.id}}taskModalForm">
+                          <input hidden type="text" name="task_id" value="{{task.id}}"/> 
+                          <p><label>New Description:&nbsp;</label><textarea cols="40" name="new_description" rows="3" required></textarea></p>
+                          <button name="updatedescription" class="btn btn-success btn-block" type="submit">Update Task</button>
+                        </div>
+                      </form>
+                    </fieldset>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Modal for each completed task -->
+      {% for task in completed_tasks %} 
+      <div id="{{task.id}}" class="modal fade" role="dialog" data-backdrop="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <b>{{task.description}}</b>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>    
+            </div>
+            <div class="modal-body">
+              {% for volunteer in all_volunteers %}
+              {% if volunteer.id == task.volunteer.id %}
+              <p>Completed By: {{volunteer.name}}</p>
+              {% endif %}
+              {% endfor %}
+              High Priority:{% if task.priority %} Yes {% else %} No {% endif %}
+              <form method="post" style="display:inline">
+                {% csrf_token %}
+                <input hidden type="text" name="task_id" value="{{task.id}}" /> 
+                <button type="submit" name="deletetask_completed" class="btn btn-danger" style="float:right">Delete Task</button>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <fieldset class="w-100">
+                {% if free_volunteers %}
+                <form method="post"> 
+                  {% csrf_token %}
+                  <div id = "{{task.id}}taskModalForm">
+                    <p><b>Reassign This Task</b></p>
+                    <input hidden id="id_description" name="description" value="{{task.description}}" />
+                    <input hidden name="previous_id" value="{{task.id}}" />
+                    <p><label for="id_priority">High Priority:&nbsp;</label><input id="id_priority" name="priority" type="checkbox" /></p>
+                    <p>Volunteer: {{form.volunteer}}</p>
+                    <button name="assign" class="btn btn-success btn-block" type="submit">Reassign</button>
+                  </div>
+                </form>
+                {% else %}
+                <form method = "post">
+                {% csrf_token %}
+                <div id = "{{task.id}}taskModalForm">
+                  No volunteers currently available to reassign to! Add more or try again later.
+                </div>  
+                </form>
+                {% endif %}
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Main dashboard with 3 column layout -->
+      <div class="container-fluid">
+        <div class="row parent">
+
+          <!-- Volunteer Column -->
+          <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <div id="volun">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Volunteers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for volunteer in all_volunteers %} 
+                  <tr>
+                    {% if volunteer.status == "Free" %}
+                    <td id="{{volunteer.id}}vname" style = "background-color: #bde2bd" data-toggle="modal" data-target="#{{volunteer.phone}}">{{volunteer.name}} - {{volunteer.status}}</td>
+                    {% else %}
+                    <td id="{{volunteer.id}}vname" style = "background-color: #efbab8" data-toggle="modal" data-target="#{{volunteer.phone}}">{{volunteer.name}} - {{volunteer.status}}</td>
+                    {% endif %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Incomplete Task Column -->
+          <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Incomplete Tasks</th>
+                </tr>
+              </thead>
+              <tbody id = "incompleteParent">
+                {% for task in incomplete_tasks %} 
+                <tr id = {{task.id}}row>
+                  <td id = "{{task.id}}col" data-toggle="modal" data-target="#{{task.id}}">
+                    {{task.description}} - {{task.status}}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Completed Task Column -->
+          <div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Completed Tasks</th>
+                </tr>
+              </thead>
+              <tbody id = 'completeParent'>
+                {% for task in completed_tasks %} 
+                <tr>
+                  <td data-toggle="modal" data-target="#{{task.id}}"
+                  <td>{{task.description}} - {{task.status}}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="jquery-slim.min.js"><\/script>')</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="{% static 'bootstrap.min.js' %}"></script>
+    <!-- Disable button doubleclick -->
+    <script>
+      $("form").each(function() {
+        $(this).submit(function() {
+          $(this).submit(function() {
+            return false;
+          });
+        });
+      });
+    </script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <!-- <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script> -->
+  </body>
+</html>

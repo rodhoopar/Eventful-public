@@ -1,0 +1,147 @@
+<!-- Event End/Summary Stats Page -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Eventful</title>
+
+        <!-- Bootstrap core CSS -->
+        <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
+
+        <!-- Custom styles for this template -->
+        <link href="{% static 'style.css' %}" rel="stylesheet">
+
+        <link rel="shortcut icon" href="{% static 'eventful.ico' %}" type="image/x-icon">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <style>
+	      body {
+	        background-color:white;
+	        text-align:left;
+	        color: black;
+	      }
+	      select, option { width: 83.5%; }
+	    </style>
+
+    </head>
+
+    <body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-toggleable-md navbar-inverse fixed-top bg-inverse">
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand" href="{% url 'manage' %}">{{event.name}}</a>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'manage' %}">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'add' %}">Volunteers</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'create' %}">Settings</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav navbar-right">
+          <li class="nav-item">
+            <a href="{% url 'create' %}"><button type="button" class="btn btn-outline-success">New Event</button></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Display messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <p style="color:black; background-color: white"{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Event summary stats -->
+    <div style="padding: 16px;">
+	    <h4>Your event is now complete. Save this page for your records!</h4>
+      <hr>
+      <h5>Event Name: {{event.name}}</h5>
+      <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Tasks Assigned: {{event.total_assigned}}<br></span>
+      <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Tasks Accepted: {{event.total_accepted}} ({{event.percent_accepted}}%)<br></span>
+      <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Tasks Reassigned: {{event.total_reassigned}} ({{event.percent_reassigned}}%)<br></span>
+      {% if event.avg_responsetime %}
+      <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Avg. Volunteer Response Time: {{event.avg_responsetime}} seconds<br></span>
+      {% else %}
+      <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Avg. Volunteer Response Time: N/A<br></span>
+      {% endif %}
+      <hr>
+      <h5>Event Volunteers: {{volunteers|length}}</h5>
+      <hr align="left" width="25%">
+  		
+      <!-- Summar stats for each volunteer -->
+      {% for volunteer in volunteers %} 
+        <span style="padding:8px;">Volunteer {{forloop.counter}}: {{volunteer.name}} ({{volunteer.phone}})</span><br> 
+        {% if volunteer.category %}
+        <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Category: {{volunteer.category}}<br></span>
+        {% else %}
+        <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Category: N/A<br></span>
+        {% endif %}
+        {% if volunteer.avg_responsetime %}
+        <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Average Response Time: {{volunteer.avg_responsetime}} seconds<br></span>
+        {% else %}
+        <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Average Response Time: N/A<br></span>
+        {% endif %}
+        <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Tasks Assigned: {{volunteer.num_assigned}}<br></span>
+        <span style="padding:16px;">
+        &bull;&nbsp;&nbsp;Tasks Accepted: {{volunteer.num_accepted}} ({{volunteer.percent_accepted}}%)<br></span>
+        <hr align="left" width="25%">
+  		{% endfor %}
+	  </div>
+
+    <!-- Javascript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="jquery-slim.min.js"><\/script>')</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+    <script src="{% static 'bootstrap.min.js' %}"></script>
+    <script src="http://code.jquery.com/jquery.js"></script>
+    
+    <!-- Prevent button doubleclick -->
+    <script>
+      $("form").each(function() {
+        $(this).submit(function() {
+          $(this).submit(function() {
+            return false;
+          });
+        });
+      });
+    </script>
+    <!--[if lt IE 10]>
+        <script src="assets/js/placeholder.js"></script>
+    <![endif]-->
+
+    </body>
+
+</html>
